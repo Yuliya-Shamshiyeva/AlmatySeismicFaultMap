@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Seismic fault map</string>
+
+    <string name="here">You are here</string>
+    <string name="center_Almaty">Almaty center</string>
+    <string name="search">Enter address ...</string>
+
+    <string name="google_maps_key">AIzaSyCKbAXCsBFADduSqVReFGF6SZsMW4J2BBk</string>
+
+    <string name="ps">Data taken from news sources. Transferred manually, errors may occur. It is planned to clarify and finalize the map</string>
+
+</resources>

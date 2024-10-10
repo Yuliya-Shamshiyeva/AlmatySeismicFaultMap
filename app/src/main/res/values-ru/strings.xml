@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Разломы Алматы</string>
+
+    <string name="here">Вы здесь</string>
+    <string name="center_Almaty">Центр Алматы</string>
+    <string name="search">Введите адрес ...</string>
+
+    <string name="google_maps_key">AIzaSyCKbAXCsBFADduSqVReFGF6SZsMW4J2BBk</string>
+
+    <string name="ps">Данные взяты с новостных источников. Перенесены в ручную, возможны погрешности. Планируются уточнения и доработка карты</string>
+</resources>

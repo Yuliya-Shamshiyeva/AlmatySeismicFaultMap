@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Сейсмикалық картасы</string>
+
+    <string name="here">Сіз мұндасыз</string>
+    <string name="center_Almaty">Алматы орталығы</string>
+    <string name="search">Мекенжайды енгізіңіз ...</string>
+
+    <string name="google_maps_key">AIzaSyCKbAXCsBFADduSqVReFGF6SZsMW4J2BBk</string>
+
+    <string name="ps">Деректер жаңалық көздерінен алынды. Қолмен көшірілді, қателер болуы мүмкін. Картаны нақтылау және жетілдіру жоспарлануда</string>
+</resources>
