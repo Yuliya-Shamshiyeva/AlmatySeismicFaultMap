@@ -11,8 +11,8 @@ android {
         applicationId = "space.clevercake.almatyseismicfaultmap"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -50,5 +50,8 @@ dependencies {
     implementation("com.google.android.libraries.places:places:2.5.0")
 
     implementation ("com.google.android.gms:play-services-ads:23.3.0")
+
+    //GDPR
+    implementation("com.google.android.ump:user-messaging-platform:3.0.0")
 
 }

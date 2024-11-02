@@ -2,16 +2,12 @@ package space.clevercake.almatyseismicfaultmap
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.location.Geocoder
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
+import android.util.Log
 import android.view.WindowMetrics
 import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -23,19 +19,24 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
-import java.util.Locale
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
-import android.view.inputmethod.EditorInfo
 import com.google.ads.mediation.admob.AdMobAdapter
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.appopen.AppOpenAd
+import com.google.android.ump.ConsentDebugSettings
+import com.google.android.ump.ConsentForm
+import com.google.android.ump.ConsentInformation
+import com.google.android.ump.ConsentRequestParameters
+import com.google.android.ump.UserMessagingPlatform
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 const val R_EARTH: Double = 6371.0 // Радиус Земли в километрах
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -50,6 +51,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var adView: AdView
     private lateinit var addContainerView: AdView
 
+
+    private lateinit var consentInformation: ConsentInformation
+    // Use an atomic boolean to initialize the Google Mobile Ads SDK and load ads once.
+    private var isMobileAdsInitializeCalled = AtomicBoolean(false)
+    private var TAG: String = "Main Activity"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -60,67 +67,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 //        textSearch = findViewById(R.id.autocomplete_text)
         suggestionsAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line)
-//        textSearch.setAdapter(suggestionsAdapter)
-//
-//        textSearch.addTextChangedListener(object : TextWatcher {
-//            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-//
-//            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-//                s?.let { getSuggestions(it.toString()) }
-//            }
-//
-//            override fun afterTextChanged(s: Editable?) {}
-//        })
-//
-//        textSearch.setOnEditorActionListener { _, actionId, _ ->
-//            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-//                performSearch(textSearch.text.toString())
-//                true
-//            } else {
-//                false
-//            }
-//        }
+
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
     }
 
-//    private fun getSuggestions(query: String) {
-//        val geocoder = Geocoder(this, Locale.getDefault())
-//        try {
-//            val addresses = geocoder.getFromLocationName(query, 5)
-//            val suggestions = addresses?.filter {
-//                isWithinRadius(LatLng(it.latitude, it.longitude), ALMATY_CENTER, RADIUS_ALMATY)
-//            }?.map { it.getAddressLine(0) } ?: emptyList()
-//            suggestionsAdapter.clear()
-//            suggestionsAdapter.addAll(suggestions)
-//            suggestionsAdapter.notifyDataSetChanged()
-//        } catch (e: Exception) {
-//            e.printStackTrace()
-//            Toast.makeText(this, "Error retrieving location", Toast.LENGTH_SHORT).show()
-//        }
-//    }
-//
-//    private fun performSearch(query: String) {
-//        val geocoder = Geocoder(this, Locale.getDefault())
-//        try {
-//            val addresses = geocoder.getFromLocationName(query, 1)
-//            val filteredAddresses = addresses?.filter {
-//                isWithinRadius(LatLng(it.latitude, it.longitude), ALMATY_CENTER, RADIUS_ALMATY)
-//            }
-//            if (filteredAddresses != null && filteredAddresses.isNotEmpty()) {
-//                val address = filteredAddresses[0]
-//                val latLng = LatLng(address.latitude, address.longitude)
-//                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
-//                mMap.addMarker(MarkerOptions().position(latLng).title(address.getAddressLine(0)))
-//            } else {
-//                Toast.makeText(this, "Location not found in the specified area", Toast.LENGTH_SHORT).show()
-//            }
-//        } catch (e: Exception) {
-//            e.printStackTrace()
-//            Toast.makeText(this, "Error performing search", Toast.LENGTH_SHORT).show()
-//        }
-//    }
+
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap //обозначили карту
@@ -451,4 +404,63 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
     }
 
+
+    private fun showConsentForm() {
+        val debugSettings = ConsentDebugSettings.Builder(this)
+            .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
+            .addTestDeviceHashedId("B3EEABB8EE11C2BE770B684D95219ECB")
+            .build()
+
+        val params = ConsentRequestParameters
+            .Builder()
+            .build()
+
+
+        consentInformation = UserMessagingPlatform.getConsentInformation(this)
+        consentInformation.requestConsentInfoUpdate(this, params, ConsentInformation.OnConsentInfoUpdateSuccessListener {
+            UserMessagingPlatform.loadAndShowConsentFormIfRequired(
+                this@MainActivity,
+                ConsentForm.OnConsentFormDismissedListener {
+                        loadAndShowError ->
+                    if (loadAndShowError != null) {
+                        // Consent gathering failed.
+                        Log.w(TAG, "${loadAndShowError.errorCode}: ${loadAndShowError.message}")
+                    }
+
+                    // Consent has been gathered.
+                    if (consentInformation.canRequestAds()) {
+                        initializeMobileAdsSdk()
+                    }
+                }
+            )
+        },
+            ConsentInformation.OnConsentInfoUpdateFailureListener {
+                    requestConsentError ->
+                // Consent gathering failed.
+                Log.w(TAG, "${requestConsentError.errorCode}: ${requestConsentError.message}")
+            })
+
+        // Check if you can initialize the Google Mobile Ads SDK in parallel
+        // while checking for new consent information. Consent obtained in
+        // the previous session can be used to request ads.
+        if (consentInformation.canRequestAds()) {
+            initializeMobileAdsSdk()
+        }
+    }
+    private fun initializeMobileAdsSdk() {
+        if (isMobileAdsInitializeCalled.getAndSet(true)) {
+            return
+        }
+
+        val backgroundScope = CoroutineScope(Dispatchers.IO)
+        backgroundScope.launch {
+
+            MobileAds.initialize(this@MainActivity) {}
+            runOnUiThread {
+                // TODO: Request an ad.
+                // loadInterstitialAd()
+            }
+
+        }
+    }
 }
